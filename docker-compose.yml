@@ -4,6 +4,8 @@ services:
   db:
     image: mariadb:10.11
     restart: unless-stopped
+    # WARNING: Change these credentials before deploying to production.
+    # Use Docker secrets or an external .env file (not committed to version control).
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: vaidya_db
@@ -28,6 +30,8 @@ services:
       db:
         condition: service_healthy
     environment:
+      # WARNING: Change SECRET_KEY to a long random string before deploying to production.
+      # Consider using Docker secrets or a .env file (not committed to version control).
       DJANGO_SECRET_KEY: 'change-me-in-production-use-long-random-string'
       DEBUG: 'True'
       DB_NAME: vaidya_db

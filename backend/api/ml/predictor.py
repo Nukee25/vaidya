@@ -4,6 +4,7 @@ ML predictor for Symptoms → Disease using a Random Forest classifier.
 Training data is embedded directly — no external files needed.
 The model is trained lazily on first use and cached in memory.
 """
+from __future__ import annotations
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier

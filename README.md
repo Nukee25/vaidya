@@ -80,7 +80,7 @@ POST /api/predict/
 ## ML Model
 
 - **Algorithm**: Random Forest Classifier (200 estimators)
-- **Training data**: Embedded dataset — 20 diseases, 60+ unique symptoms
+- **Training data**: Embedded dataset — 20 diseases, 84+ unique symptoms
 - **Lazy training**: Model trains on first prediction request and is cached in memory
 - **No external files**: All training data is embedded directly in `backend/api/ml/predictor.py`
 

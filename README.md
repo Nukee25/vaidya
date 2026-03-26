@@ -1,13 +1,13 @@
 # Vaidya – AI-Powered Disease Predictor 🩺
 
-Vaidya is a full-stack AI web application that predicts likely diseases from a list of user-selected symptoms using a Random Forest ML model.
+Vaidya is a full-stack AI web application that predicts likely diseases from a list of user-selected symptoms using an Ollama large-language model.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Backend | Django 4.2 + Django REST Framework |
-| ML | scikit-learn Random Forest |
+| AI | Ollama LLM (default: `llama3.2`) |
 | Database | MariaDB 10.11 (SQLite fallback for dev) |
 | Frontend | React 18 + Vite 5 |
 | Container | Docker + Docker Compose |
@@ -21,6 +21,12 @@ docker-compose up --build
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000/api/
 - Admin: http://localhost:8000/admin/
+- Ollama: http://localhost:11434
+
+> **Note:** On first startup, pull the model inside the running Ollama container:
+> ```bash
+> docker exec -it vaidya-ollama-1 ollama pull llama3.2
+> ```
 
 ## Local Development (without Docker)
 
@@ -32,7 +38,7 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py seed_data      # populate DB with diseases/symptoms
-python manage.py runserver
+OLLAMA_HOST=http://localhost:11434 python manage.py runserver
 ```
 
 ### Frontend
@@ -77,12 +83,12 @@ POST /api/predict/
 }
 ```
 
-## ML Model
+## AI / LLM Integration
 
-- **Algorithm**: Random Forest Classifier (200 estimators)
-- **Training data**: Embedded dataset — 20 diseases, 84+ unique symptoms
-- **Lazy training**: Model trains on first prediction request and is cached in memory
-- **No external files**: All training data is embedded directly in `backend/api/ml/predictor.py`
+- **Engine**: [Ollama](https://ollama.com) running `llama3.2` (configurable via `OLLAMA_MODEL` env var)
+- **Endpoint**: `POST /api/chat` on the Ollama service (`OLLAMA_HOST`, default `http://ollama:11434`)
+- **No training required**: The LLM reasons over symptoms at inference time and returns structured JSON predictions
+- **Prompt**: A system prompt instructs the model to return exactly 3 disease predictions with confidence scores, descriptions, and precautions
 
 ## Disclaimer
 

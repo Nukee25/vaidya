@@ -21,6 +21,14 @@ services:
       timeout: 5s
       retries: 10
 
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama_data:/root/.ollama
+
   backend:
     build: ./backend
     restart: unless-stopped
@@ -29,6 +37,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      ollama:
+        condition: service_started
     environment:
       # WARNING: Change SECRET_KEY to a long random string before deploying to production.
       # Consider using Docker secrets or a .env file (not committed to version control).
@@ -41,6 +51,8 @@ services:
       DB_PORT: '3306'
       ALLOWED_HOSTS: 'localhost,127.0.0.1,0.0.0.0,backend'
       CORS_ALLOW_ALL: 'True'
+      OLLAMA_HOST: 'http://ollama:11434'
+      OLLAMA_MODEL: 'llama3.2'
     command: >
       sh -c "python manage.py migrate &&
              python manage.py seed_data &&
@@ -56,3 +68,4 @@ services:
 
 volumes:
   mariadb_data:
+  ollama_data:

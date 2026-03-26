@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
+const API_BASE_URL = "/api/";
+
 interface SymptomCard {
   id: string;
   symptom: string;
@@ -81,61 +83,36 @@ export default function NewReport() {
     }, 300);
 
     try {
-      // Mock diagnosis API - simulating backend response
-      // In production, this would call: http://localhost:8000/api/diagnose/
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const username = localStorage.getItem("username") || "demo_user";
+      const response = await fetch(`${API_BASE_URL}predict/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          symptom_cards: validSymptoms,
+        }),
+      });
+      const responseText = await response.text();
+      const reportData = (() => {
+        if (!responseText) return {};
+        try {
+          return JSON.parse(responseText);
+        } catch {
+          return { detail: responseText };
+        }
+      })();
 
-      // Create formatted symptoms string for storage
-      const symptomsText = validSymptoms.map(card => 
-        `${card.symptom} (Duration: ${card.duration}, Severity: ${card.severity}/10)`
-      ).join("; ");
-
-      // Mock diagnosis result
-      const reportData = {
-        diagnosis: "Common Cold (Upper Respiratory Infection)",
-        severity: "Mild",
-        symptoms: [
-          "Runny or stuffy nose",
-          "Sore throat",
-          "Cough",
-          "Congestion",
-          "Slight body aches",
-          "Mild headache",
-          "Low-grade fever",
-        ],
-        recommendations: [
-          "Get plenty of rest and sleep",
-          "Stay hydrated by drinking lots of water, warm tea, or soup",
-          "Use a humidifier to ease congestion",
-          "Gargle with warm salt water for sore throat relief",
-          "Take over-the-counter pain relievers if needed",
-        ],
-        precautions: [
-          "Wash hands frequently with soap and water",
-          "Avoid close contact with others to prevent spreading",
-          "Cover your mouth and nose when coughing or sneezing",
-          "Disinfect frequently touched surfaces",
-          "Avoid smoking and secondhand smoke",
-        ],
-        medications: [
-          "Acetaminophen or ibuprofen for pain and fever",
-          "Decongestant nasal spray (use for no more than 3 days)",
-          "Cough suppressant if needed",
-          "Throat lozenges for sore throat",
-        ],
-        whenToSeeDoctor:
-          "Seek medical attention if symptoms worsen, fever exceeds 101.3°F (38.5°C) for more than 3 days, difficulty breathing, severe headache, or symptoms persist beyond 10 days.",
-        additionalInfo:
-          "The common cold is a viral infection that typically resolves on its own within 7-10 days. Antibiotics are not effective against viral infections.",
-        userSymptoms: symptomsText,
-        symptomCards: validSymptoms,
-      };
+      if (!response.ok) {
+        throw new Error(reportData.detail || "Failed to analyze symptoms");
+      }
       
       clearInterval(progressInterval);
       setProgress(100);
 
-      // Save to localStorage for demo purposes
-      const reportId = Date.now();
+      // Save to localStorage for report details page
+      const reportId = reportData.id || Date.now();
       localStorage.setItem(`report_${reportId}`, JSON.stringify(reportData));
 
       toast.success("Diagnosis complete!");

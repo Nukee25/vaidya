@@ -9,6 +9,8 @@ import { Activity, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
+const API_BASE_URL = "/api/";
+
 export default function Auth() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -30,22 +32,34 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      // Mock authentication - simulating backend response
-      // In production, this would call: http://localhost:8000/api/login/
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`${API_BASE_URL}login/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginData),
+      });
+      const responseText = await response.text();
+      const data = (() => {
+        if (!responseText) return {};
+        try {
+          return JSON.parse(responseText);
+        } catch {
+          return { detail: responseText };
+        }
+      })();
 
-      // Simulate successful login
-      if (loginData.username && loginData.password) {
-        toast.success("Login successful!");
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("username", loginData.username);
-        navigate("/dashboard");
-      } else {
-        toast.error("Please enter username and password");
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to login");
       }
+
+      toast.success("Login successful!");
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("username", data.username || loginData.username);
+      navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Failed to login");
+      toast.error(error instanceof Error ? error.message : "Failed to login");
     } finally {
       setIsLoading(false);
     }
@@ -62,23 +76,43 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      // Mock authentication - simulating backend response
-      // In production, this would call: http://localhost:8000/api/signup/
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`${API_BASE_URL}signup/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email_id: signupData.email_id,
+          username: signupData.username,
+          password: signupData.password,
+        }),
+      });
+      const responseText = await response.text();
+      const data = (() => {
+        if (!responseText) return {};
+        try {
+          return JSON.parse(responseText);
+        } catch {
+          return { detail: responseText };
+        }
+      })();
 
-      // Simulate successful signup
-      if (signupData.email_id && signupData.username && signupData.password) {
-        toast.success("Account created successfully!");
-        // Auto-login after signup
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("username", signupData.username);
-        navigate("/dashboard");
-      } else {
-        toast.error("Please fill in all fields");
+      if (!response.ok) {
+        const signupError = Array.isArray(data.username)
+          ? data.username[0]
+          : Array.isArray(data.email_id)
+            ? data.email_id[0]
+            : data.detail || "Failed to create account";
+        throw new Error(signupError);
       }
+
+      toast.success("Account created successfully!");
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("username", data.user?.username || signupData.username);
+      navigate("/dashboard");
     } catch (error) {
       console.error("Signup error:", error);
-      toast.error("Failed to create account");
+      toast.error(error instanceof Error ? error.message : "Failed to create account");
     } finally {
       setIsLoading(false);
     }

@@ -8,7 +8,7 @@ Vaidya is a full-stack AI web application that predicts likely diseases from a l
 |-------|-----------|
 | Backend | Django 4.2 + Django REST Framework |
 | AI | Ollama LLM (default: `llama3.2`) |
-| Database | MariaDB 10.11 (SQLite fallback for dev) |
+| Database | MariaDB 10.11 |
 | Frontend | React 18 + Vite 5 |
 | Container | Docker + Docker Compose |
 
@@ -36,6 +36,7 @@ docker-compose up --build
 cd backend
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+export DATABASE_URL="mysql://root:password@127.0.0.1:3306/vaidya?charset=utf8mb4"
 python manage.py migrate
 OLLAMA_HOST=http://localhost:11434 python manage.py runserver
 ```

@@ -1,4 +1,7 @@
+import os
+
 from django.contrib.auth.models import User
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -82,5 +85,32 @@ class AuthAndReportsApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]["summary"], "A report")
+
+
+class DatabaseConfigTests(APITestCase):
+    def test_database_url_required(self):
+        from config.database_config import get_database_url
+
+        original = os.environ.pop("DATABASE_URL", None)
+        try:
+            with self.assertRaises(ImproperlyConfigured):
+                get_database_url()
+        finally:
+            if original is not None:
+                os.environ["DATABASE_URL"] = original
+
+    def test_database_url_must_be_mysql_scheme(self):
+        from config.database_config import get_database_url
+
+        original = os.environ.get("DATABASE_URL")
+        os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+        try:
+            with self.assertRaises(ImproperlyConfigured):
+                get_database_url()
+        finally:
+            if original is None:
+                os.environ.pop("DATABASE_URL", None)
+            else:
+                os.environ["DATABASE_URL"] = original
 
 # Create your tests here.

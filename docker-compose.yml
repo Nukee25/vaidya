@@ -1,70 +1,40 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  db:
-    image: mariadb:10.11
-    restart: unless-stopped
-    # WARNING: Change these credentials before deploying to production.
-    # Use Docker secrets or an external .env file (not committed to version control).
+  frontend:
+    build: ./frontend
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: vaidya_db
-      MYSQL_USER: vaidya_user
-      MYSQL_PASSWORD: vaidya_pass
-    ports:
-      - '3306:3306'
-    volumes:
-      - mariadb_data:/var/lib/mysql
-    healthcheck:
-      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
-  ollama:
-    image: ollama/ollama:latest
-    restart: unless-stopped
-    ports:
-      - '11434:11434'
-    volumes:
-      - ollama_data:/root/.ollama
+      - REACT_APP_API_URL=http://localhost:8000
+    networks:
+      - publicweb
+      - api
 
   backend:
     build: ./backend
-    restart: unless-stopped
-    ports:
-      - '8000:8000'
-    depends_on:
-      db:
-        condition: service_healthy
-      ollama:
-        condition: service_started
     environment:
-      # WARNING: Change SECRET_KEY to a long random string before deploying to production.
-      # Consider using Docker secrets or a .env file (not committed to version control).
-      DJANGO_SECRET_KEY: 'change-me-in-production-use-long-random-string'
-      DEBUG: 'True'
-      DB_NAME: vaidya_db
-      DB_USER: vaidya_user
-      DB_PASSWORD: vaidya_pass
-      DB_HOST: db
-      DB_PORT: '3306'
-      ALLOWED_HOSTS: 'localhost,127.0.0.1,0.0.0.0,backend'
-      CORS_ALLOW_ALL: 'True'
-      OLLAMA_HOST: 'http://ollama:11434'
-      OLLAMA_MODEL: 'llama3.2'
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+      - DATABASE_URL=mysql://root:password@mariadb:3306/vaidya
+      - OLLAMA_URL=http://ollama:11434
+    networks:
+      - api
 
-  frontend:
-    build: ./frontend
-    restart: unless-stopped
-    ports:
-      - '5173:5173'
-    depends_on:
-      - backend
+  mariadb:
+    image: mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=vaidya
+    volumes:
+      - ./mariadb-data:/var/lib/mysql
+    networks:
+      - api
 
-volumes:
-  mariadb_data:
-  ollama_data:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ./ollama-data:/root/.ollama
+    networks:
+      - api
+
+networks:
+  api:
+  publicweb:
+    external: true

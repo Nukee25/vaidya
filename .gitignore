@@ -42,6 +42,8 @@ yarn-error.log*
 # Docker
 *.log
 
+mariadb-data/
+ollama-data/
 # Test artefacts
 .coverage
 htmlcov/

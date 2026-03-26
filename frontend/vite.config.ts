@@ -15,8 +15,13 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0', // listen on all interfaces
+    port: 5173,      // comma here is essential
+    allowedHosts: [
+      "vaidya.duckdns.org"
+    ],
     proxy: {
-      "/api": "http://localhost:8000",
+      "/api": "http://vaidya.duckdns.org/api",
     },
   },
 

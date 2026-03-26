@@ -52,17 +52,22 @@ npm run dev
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| GET | `/api/symptoms/` | List all available symptoms |
-| GET | `/api/diseases/` | List all diseases |
-| GET | `/api/diseases/<id>/` | Disease detail |
+| POST | `/api/signup/` | Create account |
+| POST | `/api/login/` | Login |
 | POST | `/api/predict/` | Predict diseases from symptoms |
+| GET | `/api/reports/?username=<username>` | List reports |
+| GET | `/api/reports/<id>/?username=<username>` | Report detail |
 
 ### Predict Request
 
 ```json
 POST /api/predict/
 {
-  "symptoms": ["Fever", "Cough", "Fatigue"]
+  "username": "john_doe",
+  "symptom_cards": [
+    { "symptom": "Fever", "duration": "1-2 days", "severity": 7 },
+    { "symptom": "Cough", "duration": "3-5 days", "severity": 5 }
+  ]
 }
 ```
 
@@ -70,15 +75,18 @@ POST /api/predict/
 
 ```json
 {
-  "symptoms": ["Fever", "Cough", "Fatigue"],
-  "predictions": [
-    {
-      "disease": "Flu",
-      "confidence": 0.72,
-      "description": "...",
-      "precautions": "..."
-    }
-  ]
+  "id": 1,
+  "diagnosis": "Common Cold (Upper Respiratory Infection)",
+  "severity": "Mild",
+  "symptoms": ["Fever", "Cough"],
+  "recommendations": ["Get plenty of rest and sleep"],
+  "precautions": ["Wash hands frequently with soap and water"],
+  "medications": ["Acetaminophen or ibuprofen for pain and fever"],
+  "whenToSeeDoctor": "...",
+  "additionalInfo": "...",
+  "summary": "Respiratory symptoms analysis",
+  "status": "completed",
+  "date": "2026-03-26T00:00:00Z"
 }
 ```
 
@@ -92,4 +100,3 @@ POST /api/predict/
 ## Disclaimer
 
 This application is for **educational purposes only** and is **not** a substitute for professional medical advice, diagnosis, or treatment.
-

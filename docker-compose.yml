@@ -4,7 +4,12 @@ services:
   frontend:
     build: ./frontend
     environment:
-      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_API_URL=http://localhost:8000/api
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    depends_on:
+      - backend
     networks:
       - publicweb
       - api
@@ -12,16 +17,25 @@ services:
   backend:
     build: ./backend
     environment:
-      - DATABASE_URL=mysql://root:password@mariadb:3306/vaidya
-      - OLLAMA_URL=http://ollama:11434
+      - DATABASE_URL=mysql://root:password@mariadb:3306/vaidya?charset=utf8mb4
+      - OLLAMA_HOST=http://ollama:11434
+      - DJANGO_DEBUG=true
+      - DJANGO_ALLOWED_HOSTS=*
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mariadb
+      - ollama
     networks:
       - api
 
   mariadb:
-    image: mariadb:latest
+    image: mariadb:10.11
     environment:
       - MYSQL_ROOT_PASSWORD=password
       - MYSQL_DATABASE=vaidya
+    ports:
+      - "3306:3306"
     volumes:
       - ./mariadb-data:/var/lib/mysql
     networks:
@@ -31,10 +45,11 @@ services:
     image: ollama/ollama:latest
     volumes:
       - ./ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
     networks:
       - api
 
 networks:
   api:
   publicweb:
-    external: true

@@ -24,7 +24,4 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/", include("api.urls")),
     path("apilogin/", LoginView.as_view(), name="legacy-api-login"),
-]
-
-# Development-only media serving. Use a dedicated media server in production.
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -15,6 +15,7 @@ import {
   Share2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "../utils/api";
 
 interface DiagnosisReport {
   diagnosis: string;
@@ -34,67 +35,20 @@ export default function ReportDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Try to load from localStorage first (for demo)
-    const savedReport = localStorage.getItem(`report_${id}`);
-    
-    if (savedReport) {
-      try {
-        setReport(JSON.parse(savedReport));
-        setLoading(false);
-      } catch (error) {
-        console.error("Error parsing report:", error);
-        // Fallback to mock data
-        loadMockReport();
-      }
-    } else {
-      // Load mock data or fetch from API
-      loadMockReport();
+    const username = localStorage.getItem("username") || "demo_user";
+    if (!id) {
+      setReport(null);
+      setLoading(false);
+      return;
     }
+    api
+      .get(`reports/${id}/?username=${encodeURIComponent(username)}`)
+      .then((data) =>
+        setReport(data && typeof data.diagnosis === "string" ? data : null)
+      )
+      .catch(() => setReport(null))
+      .finally(() => setLoading(false));
   }, [id]);
-
-  const loadMockReport = () => {
-    // Mock data for demonstration
-    const mockReport: DiagnosisReport = {
-      diagnosis: "Common Cold (Upper Respiratory Infection)",
-      severity: "Mild",
-      symptoms: [
-        "Runny or stuffy nose",
-        "Sore throat",
-        "Cough",
-        "Congestion",
-        "Slight body aches",
-        "Mild headache",
-        "Low-grade fever",
-      ],
-      recommendations: [
-        "Get plenty of rest and sleep",
-        "Stay hydrated by drinking lots of water, warm tea, or soup",
-        "Use a humidifier to ease congestion",
-        "Gargle with warm salt water for sore throat relief",
-        "Take over-the-counter pain relievers if needed",
-      ],
-      precautions: [
-        "Wash hands frequently with soap and water",
-        "Avoid close contact with others to prevent spreading",
-        "Cover your mouth and nose when coughing or sneezing",
-        "Disinfect frequently touched surfaces",
-        "Avoid smoking and secondhand smoke",
-      ],
-      medications: [
-        "Acetaminophen or ibuprofen for pain and fever",
-        "Decongestant nasal spray (use for no more than 3 days)",
-        "Cough suppressant if needed",
-        "Throat lozenges for sore throat",
-      ],
-      whenToSeeDoctor:
-        "Seek medical attention if symptoms worsen, fever exceeds 101.3°F (38.5°C) for more than 3 days, difficulty breathing, severe headache, or symptoms persist beyond 10 days.",
-      additionalInfo:
-        "The common cold is a viral infection that typically resolves on its own within 7-10 days. Antibiotics are not effective against viral infections.",
-    };
-
-    setReport(mockReport);
-    setLoading(false);
-  };
 
   const handleDownload = () => {
     toast.success("Report downloaded successfully");

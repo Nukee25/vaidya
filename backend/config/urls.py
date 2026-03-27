@@ -16,8 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from api.views import LoginView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/", include("api.urls")),
+    path("apilogin/", LoginView.as_view(), name="legacy-api-login"),
 ]

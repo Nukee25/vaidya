@@ -1,6 +1,9 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.conf import settings
+import json
+import ollama
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -63,6 +66,50 @@ def _build_mock_diagnosis(symptom_cards):
     }
 
 
+def _build_ollama_prompt(symptom_cards):
+    return (
+        "You are a medical triage assistant. Return only valid JSON with keys: "
+        "diagnosis (string), severity (Mild|Moderate|Severe), recommendations (string[]), "
+        "precautions (string[]), medications (string[]), when_to_see_doctor (string), "
+        "additional_info (string), summary (string).\n"
+        f"Input symptom cards: {json.dumps(symptom_cards)}"
+    )
+
+
+def _build_report_from_ollama(symptom_cards):
+    symptom_names = [str(card.get("symptom", "")).strip() for card in symptom_cards if str(card.get("symptom", "")).strip()]
+    symptoms_text = "; ".join(
+        [
+            f"{card.get('symptom', '').strip()} (Duration: {card.get('duration', '')}, Severity: {card.get('severity', 5)}/10)"
+            for card in symptom_cards
+            if str(card.get("symptom", "")).strip()
+        ]
+    )
+
+    response = ollama.chat(
+        model=getattr(settings, "OLLAMA_MODEL", "llama3.2"),
+        messages=[{"role": "user", "content": _build_ollama_prompt(symptom_cards)}],
+        format="json",
+    )
+    content = response.get("message", {}).get("content", "{}")
+    payload = json.loads(content)
+
+    return {
+        "diagnosis": str(payload.get("diagnosis") or "General Viral Syndrome"),
+        "severity": str(payload.get("severity") or "Mild"),
+        "symptoms": symptom_names,
+        "recommendations": payload.get("recommendations") or [],
+        "precautions": payload.get("precautions") or [],
+        "medications": payload.get("medications") or [],
+        "when_to_see_doctor": str(payload.get("when_to_see_doctor") or ""),
+        "additional_info": str(payload.get("additional_info") or ""),
+        "user_symptoms": symptoms_text,
+        "symptom_cards": symptom_cards,
+        "summary": str(payload.get("summary") or "Medical diagnosis report"),
+        "status": "completed",
+    }
+
+
 class SignupView(APIView):
     permission_classes = []
 
@@ -110,7 +157,10 @@ class PredictView(APIView):
             username=username,
             defaults={"email": f"{username}@example.com"},
         )
-        report_payload = _build_mock_diagnosis(symptom_cards)
+        try:
+            report_payload = _build_report_from_ollama(symptom_cards)
+        except Exception:
+            report_payload = _build_mock_diagnosis(symptom_cards)
         report = DiagnosisReport.objects.create(user=user, **report_payload)
         response = ReportDetailSerializer(report).data
         response["id"] = report.id

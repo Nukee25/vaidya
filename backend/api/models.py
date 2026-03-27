@@ -13,6 +13,7 @@ class DiagnosisReport(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="diagnosis_reports")
     diagnosis = models.CharField(max_length=255)
+    predicted_diseases = models.JSONField(default=list)
     severity = models.CharField(max_length=32, default="Mild")
     symptoms = models.JSONField(default=list)
     recommendations = models.JSONField(default=list)
@@ -24,6 +25,7 @@ class DiagnosisReport(models.Model):
     symptom_cards = models.JSONField(default=list)
     summary = models.CharField(max_length=255, default="Medical diagnosis report")
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="completed")
+    medical_image = models.FileField(upload_to="medical-images/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

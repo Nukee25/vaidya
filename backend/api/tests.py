@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -50,6 +51,7 @@ class AuthAndReportsApiTests(APITestCase):
         self.assertEqual(detail_res.status_code, status.HTTP_200_OK)
         self.assertIn("diagnosis", detail_res.data)
         self.assertEqual(detail_res.data["symptoms"], ["Fever", "Cough"])
+        self.assertGreaterEqual(len(detail_res.data["predicted_diseases"]), 3)
 
     def test_predict_requires_symptom_cards(self):
         res = self.client.post(reverse("predict"), {"username": "john"}, format="json")
@@ -139,6 +141,21 @@ class AuthAndReportsApiTests(APITestCase):
         self.assertEqual(res.data["severity"], "Moderate")
         self.assertEqual(res.data["recommendations"], ["Rest"])
         self.assertEqual(res.data["summary"], "Flu triage")
+        self.assertEqual(len(res.data["predicted_diseases"]), 3)
+
+    def test_predict_accepts_medical_image_upload(self):
+        image = SimpleUploadedFile("xray.png", b"fake-image-content", content_type="image/png")
+        res = self.client.post(
+            reverse("predict"),
+            {
+                "username": "john",
+                "symptom_cards": '[{"symptom":"Chest pain","duration":"1-2 days","severity":6}]',
+                "medical_image": image,
+            },
+            format="multipart",
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(res.data["medicalImage"].startswith("medical-images/"))
 
     def test_legacy_apilogin_endpoint_maps_to_login_view(self):
         User.objects.create_user(username="john", email="john@example.com", password="strongpass123")

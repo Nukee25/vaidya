@@ -30,6 +30,7 @@ class PredictSerializer(serializers.Serializer):
         child=serializers.DictField(),
         allow_empty=False,
     )
+    medical_image = serializers.FileField(required=False, allow_null=True)
 
 
 class ReportListSerializer(serializers.ModelSerializer):
@@ -43,11 +44,13 @@ class ReportListSerializer(serializers.ModelSerializer):
 class ReportDetailSerializer(serializers.ModelSerializer):
     whenToSeeDoctor = serializers.CharField(source="when_to_see_doctor")
     additionalInfo = serializers.CharField(source="additional_info")
+    medicalImage = serializers.FileField(source="medical_image", read_only=True)
 
     class Meta:
         model = DiagnosisReport
         fields = [
             "diagnosis",
+            "predicted_diseases",
             "severity",
             "symptoms",
             "recommendations",
@@ -57,4 +60,5 @@ class ReportDetailSerializer(serializers.ModelSerializer):
             "additionalInfo",
             "user_symptoms",
             "symptom_cards",
+            "medicalImage",
         ]

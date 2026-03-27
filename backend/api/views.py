@@ -38,6 +38,11 @@ def _build_mock_diagnosis(symptom_cards):
     top_symptom = symptom_names[0] if symptom_names else "general discomfort"
     return {
         "diagnosis": "Common Cold (Upper Respiratory Infection)",
+        "predicted_diseases": [
+            {"disease": "Common Cold (Upper Respiratory Infection)", "probability": 65},
+            {"disease": "Seasonal Allergic Rhinitis", "probability": 22},
+            {"disease": "Influenza", "probability": 13},
+        ],
         "severity": "Mild",
         "symptoms": symptom_names
         or [
@@ -77,11 +82,48 @@ def _build_mock_diagnosis(symptom_cards):
 def _build_ollama_prompt(symptom_cards):
     return (
         "You are a medical triage assistant. Return only valid JSON with keys: "
+        "predicted_diseases (array of at least 3 items with keys disease (string) and probability (number in percent)), "
         "diagnosis (string), severity (Mild|Moderate|Severe), recommendations (string[]), "
         "precautions (string[]), medications (string[]), when_to_see_doctor (string), "
         "additional_info (string), summary (string).\n"
         f"Input symptom cards: {json.dumps(symptom_cards)}"
     )
+
+
+def _normalize_predicted_diseases(raw_predictions, diagnosis_fallback):
+    normalized = []
+    if isinstance(raw_predictions, list):
+        for item in raw_predictions:
+            if not isinstance(item, dict):
+                continue
+            disease = str(item.get("disease") or item.get("diagnosis") or "").strip()
+            if not disease:
+                continue
+            try:
+                probability = float(item.get("probability", 0))
+            except (TypeError, ValueError):
+                probability = 0.0
+            probability = max(0.0, min(100.0, probability))
+            normalized.append(
+                {
+                    "disease": disease,
+                    "probability": round(probability, 2),
+                }
+            )
+            if len(normalized) == 3:
+                break
+    if len(normalized) < 3:
+        defaults = _build_mock_diagnosis([])["predicted_diseases"]
+        default_seed = defaults[0]["disease"] if defaults else "General Viral Syndrome"
+        seed = diagnosis_fallback or (normalized[0]["disease"] if normalized else default_seed)
+        fallback_predictions = [{"disease": seed, "probability": 60}] + defaults
+        for candidate in fallback_predictions:
+            if len(normalized) == 3:
+                break
+            if any(existing["disease"].lower() == candidate["disease"].lower() for existing in normalized):
+                continue
+            normalized.append(candidate)
+    return normalized[:3]
 
 
 def _build_report_from_ollama(symptom_cards):
@@ -101,9 +143,12 @@ def _build_report_from_ollama(symptom_cards):
     )
     content = response.get("message", {}).get("content", "{}")
     payload = json.loads(content)
+    diagnosis = str(payload.get("diagnosis") or "General Viral Syndrome")
+    predicted_diseases = _normalize_predicted_diseases(payload.get("predicted_diseases"), diagnosis)
 
     return {
-        "diagnosis": str(payload.get("diagnosis") or "General Viral Syndrome"),
+        "diagnosis": diagnosis,
+        "predicted_diseases": predicted_diseases,
         "severity": str(payload.get("severity") or "Mild"),
         "symptoms": symptom_names,
         "recommendations": payload.get("recommendations") or [],
@@ -157,9 +202,19 @@ class PredictView(APIView):
     permission_classes = []
 
     def post(self, request):
-        serializer = PredictSerializer(data=request.data)
+        serializer_payload = {
+            "symptom_cards": request.data.get("symptom_cards"),
+            "medical_image": request.data.get("medical_image"),
+        }
+        if isinstance(serializer_payload["symptom_cards"], str):
+            try:
+                serializer_payload["symptom_cards"] = json.loads(serializer_payload["symptom_cards"])
+            except (TypeError, ValueError, json.JSONDecodeError):
+                pass
+        serializer = PredictSerializer(data=serializer_payload)
         serializer.is_valid(raise_exception=True)
         symptom_cards = serializer.validated_data["symptom_cards"]
+        medical_image = serializer.validated_data.get("medical_image")
         username = request.data.get("username")
         if not username:
             return Response({"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -172,7 +227,7 @@ class PredictView(APIView):
         except (ConnectionError, json.JSONDecodeError, KeyError, TypeError, ValueError):
             logger.exception("Ollama report generation failed; falling back to mock diagnosis.")
             report_payload = _build_mock_diagnosis(symptom_cards)
-        report = DiagnosisReport.objects.create(user=user, **report_payload)
+        report = DiagnosisReport.objects.create(user=user, medical_image=medical_image, **report_payload)
         response = ReportDetailSerializer(report).data
         response["id"] = report.id
         response["date"] = report.created_at

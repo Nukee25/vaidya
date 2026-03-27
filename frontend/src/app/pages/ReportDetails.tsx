@@ -19,6 +19,7 @@ import { api } from "../utils/api";
 
 interface DiagnosisReport {
   diagnosis: string;
+  predicted_diseases?: Array<{ disease: string; probability: number }>;
   severity: string;
   symptoms: string[];
   recommendations: string[];
@@ -26,6 +27,7 @@ interface DiagnosisReport {
   medications?: string[];
   whenToSeeDoctor?: string;
   additionalInfo?: string;
+  medicalImage?: string;
 }
 
 export default function ReportDetails() {
@@ -33,6 +35,12 @@ export default function ReportDetails() {
   const navigate = useNavigate();
   const [report, setReport] = useState<DiagnosisReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const getMedicalImageSrc = (medicalImage: string) => {
+    if (medicalImage.startsWith("http://") || medicalImage.startsWith("https://") || medicalImage.startsWith("//")) {
+      return medicalImage;
+    }
+    return medicalImage.startsWith("/") ? medicalImage : `/${medicalImage}`;
+  };
 
   useEffect(() => {
     const username = localStorage.getItem("username");
@@ -176,6 +184,43 @@ export default function ReportDetails() {
             </div>
           </CardContent>
         </Card>
+
+        {report.predicted_diseases && report.predicted_diseases.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Top Predicted Diseases</CardTitle>
+              <CardDescription>Top 3 probable conditions with confidence</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {report.predicted_diseases.slice(0, 3).map((prediction, index) => (
+                  <div
+                    key={`${prediction.disease}-${index}`}
+                    className="flex items-center justify-between rounded-lg border border-gray-200 p-3"
+                  >
+                    <span className="font-medium text-gray-800">{prediction.disease}</span>
+                    <Badge variant="secondary">{prediction.probability}%</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {report.medicalImage && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Submitted Medical Image</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <img
+                src={getMedicalImageSrc(report.medicalImage)}
+                alt="Submitted medical file"
+                className="max-h-96 w-full rounded-lg border object-contain bg-white"
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Symptoms */}
         <Card className="mb-6">

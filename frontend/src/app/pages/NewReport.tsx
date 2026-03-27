@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -13,8 +13,6 @@ import { Alert, AlertDescription } from "../components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { api } from "../utils/api";
 
-const API_BASE_URL = "/api/";
-
 interface SymptomCard {
   id: string;
   symptom: string;
@@ -26,6 +24,8 @@ export default function NewReport() {
   const navigate = useNavigate();
   const [symptomCards, setSymptomCards] = useState<SymptomCard[]>([
   ]);
+  const [medicalImage, setMedicalImage] = useState<File | null>(null);
+  const [medicalImagePreview, setMedicalImagePreview] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -83,30 +83,13 @@ export default function NewReport() {
     }, 300);
 
     try {
-      /* const username = localStorage.getItem("username") || "demo_user";
-      const response = await fetch(`${API_BASE_URL}predict/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          symptom_cards: validSymptoms,
-        }),
-      });
-      const responseText = await response.text();
-      const reportData = (() => {
-        if (!responseText) return {};
-        try {
-          return JSON.parse(responseText);
-        } catch {
-          return { detail: responseText };
-        }
-      })(); */
-      const reportData = await api.post("predict/", {
-        username: localStorage.getItem("username") || "demo_user",
-        symptom_cards: validSymptoms,
-      });
+      const formData = new FormData();
+      formData.append("username", localStorage.getItem("username") || "demo_user");
+      formData.append("symptom_cards", JSON.stringify(validSymptoms));
+      if (medicalImage) {
+        formData.append("medical_image", medicalImage);
+      }
+      const reportData = await api.post("predict/", formData);
 
       // if (!response.ok) {
       //   throw new Error(reportData.detail || "Failed to analyze symptoms");
@@ -133,6 +116,24 @@ export default function NewReport() {
       setIsAnalyzing(false);
     }
   };
+
+  const handleMedicalImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setMedicalImage(file);
+    if (file) {
+      setMedicalImagePreview(URL.createObjectURL(file));
+      return;
+    }
+    setMedicalImagePreview("");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (medicalImagePreview) {
+        URL.revokeObjectURL(medicalImagePreview);
+      }
+    };
+  }, [medicalImagePreview]);
 
   const durationOptions = [
     "Less than 1 day",
@@ -309,6 +310,24 @@ export default function NewReport() {
                     <Plus className="w-5 h-5 mr-2" />
                     Add Another Symptom
                   </Button>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="medical-image">Medical Image (optional)</Label>
+                    <Input
+                      id="medical-image"
+                      type="file"
+                      accept="image/*,.pdf,.dcm"
+                      onChange={handleMedicalImageChange}
+                      disabled={isAnalyzing}
+                    />
+                    {medicalImagePreview && (
+                      <img
+                        src={medicalImagePreview}
+                        alt="Medical upload preview"
+                        className="h-36 w-full object-cover rounded-md border"
+                      />
+                    )}
+                  </div>
 
                   {/* Progress */}
                   {isAnalyzing && (

@@ -12,7 +12,7 @@ export class API {
   async request(method, endpoint, { body, headers = {} } = {}) {
 
     try {
-      const url = `${this.baseUrl}${endpoint}`;
+      const url = `${this.baseUrl.replace(/\/$/, "")}/${String(endpoint).replace(/^\//, "")}`;
       const token = typeof window === 'undefined'
         ? null
         : (!this.#tokenPath)

@@ -4,6 +4,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Activity, Plus, FileText, LogOut, User, Calendar, TrendingUp } from "lucide-react";
 import { Badge } from "../components/ui/badge";
+import { api } from "../utils/api";
 
 interface Report {
   id: number;
@@ -15,20 +16,7 @@ interface Report {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
-  const [reports, setReports] = useState<Report[]>([
-    {
-      id: 1,
-      date: "2026-03-10",
-      summary: "Respiratory symptoms analysis",
-      status: "completed",
-    },
-    {
-      id: 2,
-      date: "2026-03-05",
-      summary: "General health checkup",
-      status: "completed",
-    },
-  ]);
+  const [reports, setReports] = useState<Report[]>([]);
 
   useEffect(() => {
     const isAuth = localStorage.getItem("isAuthenticated");
@@ -37,7 +25,15 @@ export default function Dashboard() {
     if (!isAuth) {
       navigate("/auth");
     } else {
-      setUsername(user || "User");
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+      setUsername(user);
+      api
+        .get(`reports/?username=${encodeURIComponent(user)}`)
+        .then((data) => setReports(Array.isArray(data) ? data : []))
+        .catch(() => setReports([]));
     }
   }, [navigate]);
 

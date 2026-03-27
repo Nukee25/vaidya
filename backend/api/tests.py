@@ -55,10 +55,36 @@ class AuthAndReportsApiTests(APITestCase):
         res = self.client.post(reverse("predict"), {"username": "john"}, format="json")
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_predict_requires_username(self):
+        res = self.client.post(
+            reverse("predict"),
+            {"symptom_cards": [{"symptom": "Fever", "duration": "1 day", "severity": 5}]},
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_report_detail_not_found(self):
         User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
         res = self.client.get(reverse("report-detail", kwargs={"report_id": 999}), {"username": "alice"})
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_report_endpoints_require_username_query_param(self):
+        user = User.objects.create_user(username="alice", password="pass12345")
+        report = DiagnosisReport.objects.create(
+            user=user,
+            diagnosis="Diagnosis A",
+            severity="Mild",
+            symptoms=["Cough"],
+            recommendations=["Rest"],
+            precautions=["Hydrate"],
+            summary="A report",
+        )
+
+        list_res = self.client.get(reverse("reports"))
+        self.assertEqual(list_res.status_code, status.HTTP_400_BAD_REQUEST)
+
+        detail_res = self.client.get(reverse("report-detail", kwargs={"report_id": report.id}))
+        self.assertEqual(detail_res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_reports_filter_by_username(self):
         john = User.objects.create_user(username="john", password="pass12345")

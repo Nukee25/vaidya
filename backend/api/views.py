@@ -1,8 +1,10 @@
+import json
+import logging
+
 from django.contrib.auth import authenticate
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.conf import settings
-import json
 import ollama
 from rest_framework import status
 from rest_framework.response import Response
@@ -17,14 +19,20 @@ from .serializers import (
     SignupSerializer,
 )
 
+logger = logging.getLogger(__name__)
+
+
+def _normalized_symptom_cards(symptom_cards):
+    return [card for card in symptom_cards if str(card.get("symptom", "")).strip()]
+
 
 def _build_mock_diagnosis(symptom_cards):
-    symptom_names = [str(card.get("symptom", "")).strip() for card in symptom_cards if str(card.get("symptom", "")).strip()]
+    valid_cards = _normalized_symptom_cards(symptom_cards)
+    symptom_names = [str(card.get("symptom", "")).strip() for card in valid_cards]
     symptoms_text = "; ".join(
         [
             f"{card.get('symptom', '').strip()} (Duration: {card.get('duration', '')}, Severity: {card.get('severity', 5)}/10)"
-            for card in symptom_cards
-            if str(card.get("symptom", "")).strip()
+            for card in valid_cards
         ]
     )
     top_symptom = symptom_names[0] if symptom_names else "general discomfort"
@@ -77,12 +85,12 @@ def _build_ollama_prompt(symptom_cards):
 
 
 def _build_report_from_ollama(symptom_cards):
-    symptom_names = [str(card.get("symptom", "")).strip() for card in symptom_cards if str(card.get("symptom", "")).strip()]
+    valid_cards = _normalized_symptom_cards(symptom_cards)
+    symptom_names = [str(card.get("symptom", "")).strip() for card in valid_cards]
     symptoms_text = "; ".join(
         [
             f"{card.get('symptom', '').strip()} (Duration: {card.get('duration', '')}, Severity: {card.get('severity', 5)}/10)"
-            for card in symptom_cards
-            if str(card.get("symptom", "")).strip()
+            for card in valid_cards
         ]
     )
 
@@ -152,14 +160,17 @@ class PredictView(APIView):
         serializer = PredictSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         symptom_cards = serializer.validated_data["symptom_cards"]
-        username = request.data.get("username") or "demo_user"
+        username = request.data.get("username")
+        if not username:
+            return Response({"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST)
         user, _ = User.objects.get_or_create(
             username=username,
             defaults={"email": f"{username}@example.com"},
         )
         try:
             report_payload = _build_report_from_ollama(symptom_cards)
-        except Exception:
+        except (ConnectionError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+            logger.exception("Ollama report generation failed; falling back to mock diagnosis.")
             report_payload = _build_mock_diagnosis(symptom_cards)
         report = DiagnosisReport.objects.create(user=user, **report_payload)
         response = ReportDetailSerializer(report).data
@@ -175,9 +186,9 @@ class ReportsView(APIView):
 
     def get(self, request):
         username = request.query_params.get("username")
-        reports = DiagnosisReport.objects.all()
-        if username:
-            reports = reports.filter(user__username=username)
+        if not username:
+            return Response({"detail": "username query parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+        reports = DiagnosisReport.objects.filter(user__username=username)
         serializer = ReportListSerializer(reports, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -187,9 +198,10 @@ class ReportDetailView(APIView):
 
     def get(self, request, report_id):
         username = request.query_params.get("username")
+        if not username:
+            return Response({"detail": "username query parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
         filters = Q(pk=report_id)
-        if username:
-            filters &= Q(user__username=username)
+        filters &= Q(user__username=username)
         report = DiagnosisReport.objects.filter(filters).first()
         if not report:
             return Response({"detail": "Report not found"}, status=status.HTTP_404_NOT_FOUND)

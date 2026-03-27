@@ -25,9 +25,13 @@ export default function Dashboard() {
     if (!isAuth) {
       navigate("/auth");
     } else {
-      setUsername(user || "User");
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+      setUsername(user);
       api
-        .get(`reports/?username=${encodeURIComponent(user || "User")}`)
+        .get(`reports/?username=${encodeURIComponent(user)}`)
         .then((data) => setReports(Array.isArray(data) ? data : []))
         .catch(() => setReports([]));
     }

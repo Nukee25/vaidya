@@ -35,7 +35,11 @@ export default function ReportDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const username = localStorage.getItem("username") || "demo_user";
+    const username = localStorage.getItem("username");
+    if (!username) {
+      navigate("/auth");
+      return;
+    }
     if (!id) {
       setReport(null);
       setLoading(false);

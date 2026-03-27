@@ -20,6 +20,8 @@ from .serializers import (
 )
 
 logger = logging.getLogger(__name__)
+MAX_REPORTS_FOR_HEALTH_SCORE = 10
+UNKNOWN_SEVERITY_SCORE = 75
 
 
 def _calculate_health_score(reports):
@@ -30,7 +32,7 @@ def _calculate_health_score(reports):
         "moderate": 70,
         "severe": 40,
     }
-    values = [severity_to_score.get(str(report.severity).strip().lower(), 75) for report in reports]
+    values = [severity_to_score.get(str(report.severity).strip().lower(), UNKNOWN_SEVERITY_SCORE) for report in reports]
     return round(sum(values) / len(values))
 
 
@@ -270,7 +272,7 @@ class HealthScoreView(APIView):
         user = User.objects.filter(username=username).first()
         if not user:
             return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-        reports = list(DiagnosisReport.objects.filter(user=user)[:10])
+        reports = DiagnosisReport.objects.filter(user=user)[:MAX_REPORTS_FOR_HEALTH_SCORE]
         return Response({"score": _calculate_health_score(reports)}, status=status.HTTP_200_OK)
 
 

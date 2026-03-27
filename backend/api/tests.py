@@ -138,6 +138,7 @@ class AuthAndReportsApiTests(APITestCase):
 
         res = self.client.get(reverse("health-score"), {"username": "john"})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+        # (Mild=90 + Severe=40) / 2
         self.assertEqual(res.data["score"], 65)
 
     def test_health_score_requires_username(self):

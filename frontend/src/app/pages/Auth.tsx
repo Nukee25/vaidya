@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { api } from "../utils/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Activity, Mail, Lock, User } from "lucide-react";
@@ -30,37 +31,18 @@ export default function Auth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      const response = await fetch(`${API_BASE_URL}login/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(loginData),
-      });
-      const responseText = await response.text();
-      const data = (() => {
-        if (!responseText) return {};
-        try {
-          return JSON.parse(responseText);
-        } catch {
-          return { detail: responseText };
-        }
-      })();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Failed to login");
-      }
-
-      toast.success("Login successful!");
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("username", data.username || loginData.username);
-      navigate("/dashboard");
+      api.post("login/", loginData)
+        .then((resp) => {
+          toast.success("Login successful!");
+          localStorage.setItem("isAuthenticated", "true");
+          localStorage.setItem("username", resp.username || loginData.username);
+          navigate("/dashboard");
+        });
     } catch (error) {
       console.error("Login error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to login");
-    } finally {
+    } finally{
       setIsLoading(false);
     }
   };
@@ -76,39 +58,14 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}signup/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email_id: signupData.email_id,
-          username: signupData.username,
-          password: signupData.password,
-        }),
+      const resp = await api.post("signup/", {
+        email_id: signupData.email_id,
+        username: signupData.username,
+        password: signupData.password,
       });
-      const responseText = await response.text();
-      const data = (() => {
-        if (!responseText) return {};
-        try {
-          return JSON.parse(responseText);
-        } catch {
-          return { detail: responseText };
-        }
-      })();
-
-      if (!response.ok) {
-        const signupError = Array.isArray(data.username)
-          ? data.username[0]
-          : Array.isArray(data.email_id)
-            ? data.email_id[0]
-            : data.detail || "Failed to create account";
-        throw new Error(signupError);
-      }
-
       toast.success("Account created successfully!");
       localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("username", data.user?.username || signupData.username);
+      localStorage.setItem("username", resp.username);
       navigate("/dashboard");
     } catch (error) {
       console.error("Signup error:", error);

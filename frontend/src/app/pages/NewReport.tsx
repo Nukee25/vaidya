@@ -11,6 +11,7 @@ import { Progress } from "../components/ui/progress";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { api } from "../utils/api";
 
 const API_BASE_URL = "/api/";
 
@@ -24,7 +25,6 @@ interface SymptomCard {
 export default function NewReport() {
   const navigate = useNavigate();
   const [symptomCards, setSymptomCards] = useState<SymptomCard[]>([
-    { id: crypto.randomUUID(), symptom: "", duration: "", severity: 5 }
   ]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -32,7 +32,7 @@ export default function NewReport() {
   const addSymptomCard = () => {
     setSymptomCards([
       ...symptomCards,
-      { id: crypto.randomUUID(), symptom: "", duration: "", severity: 5 }
+      { id:Math.floor(Date.now()+0), symptom: "", duration: "", severity: 5 }
     ]);
   };
 
@@ -83,7 +83,7 @@ export default function NewReport() {
     }, 300);
 
     try {
-      const username = localStorage.getItem("username") || "demo_user";
+      /* const username = localStorage.getItem("username") || "demo_user";
       const response = await fetch(`${API_BASE_URL}predict/`, {
         method: "POST",
         headers: {
@@ -102,11 +102,15 @@ export default function NewReport() {
         } catch {
           return { detail: responseText };
         }
-      })();
+      })(); */
+      const reportData = await api.post("predict/", {
+        username: localStorage.getItem("username") || "demo_user",
+        symptom_cards: validSymptoms,
+      });
 
-      if (!response.ok) {
-        throw new Error(reportData.detail || "Failed to analyze symptoms");
-      }
+      // if (!response.ok) {
+      //   throw new Error(reportData.detail || "Failed to analyze symptoms");
+      // }
       
       clearInterval(progressInterval);
       setProgress(100);

@@ -105,7 +105,7 @@ export default function ReportDetails() {
   };
 
   const getSeverityColor = (severity: string) => {
-    switch (severity.toLowerCase()) {
+    switch (severity?.toLowerCase()) {
       case "mild":
         return "bg-green-100 text-green-700 hover:bg-green-100";
       case "moderate":
@@ -226,7 +226,7 @@ export default function ReportDetails() {
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-3">
-              {report.symptoms.map((symptom, index) => (
+              {report?.symptoms?.map((symptom, index) => (
                 <div
                   key={index}
                   className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg"
@@ -249,7 +249,7 @@ export default function ReportDetails() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {report.recommendations.map((rec, index) => (
+              {report?.recommendations?.map((rec, index) => (
                 <li key={index} className="flex items-start gap-3">
                   <span className="flex items-center justify-center w-6 h-6 bg-green-100 text-green-700 rounded-full text-sm font-medium flex-shrink-0">
                     {index + 1}
@@ -272,7 +272,7 @@ export default function ReportDetails() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {report.medications.map((med, index) => (
+                {report?.medications?.map((med, index) => (
                   <div
                     key={index}
                     className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg"
@@ -298,7 +298,7 @@ export default function ReportDetails() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {report.precautions.map((precaution, index) => (
+              {report?.precautions?.map((precaution, index) => (
                 <li key={index} className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-700">{precaution}</span>

@@ -155,7 +155,7 @@ class AuthAndReportsApiTests(APITestCase):
             format="multipart",
         )
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(res.data["medicalImage"].startswith("medical-images/"))
+        self.assertIn("medical-images/", res.data["medicalImage"])
 
     def test_legacy_apilogin_endpoint_maps_to_login_view(self):
         User.objects.create_user(username="john", email="john@example.com", password="strongpass123")

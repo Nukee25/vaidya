@@ -35,6 +35,12 @@ export default function ReportDetails() {
   const navigate = useNavigate();
   const [report, setReport] = useState<DiagnosisReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const getMedicalImageSrc = (medicalImage: string) => {
+    if (medicalImage.startsWith("http://") || medicalImage.startsWith("https://") || medicalImage.startsWith("//")) {
+      return medicalImage;
+    }
+    return medicalImage.startsWith("/") ? medicalImage : `/${medicalImage}`;
+  };
 
   useEffect(() => {
     const username = localStorage.getItem("username");
@@ -208,7 +214,7 @@ export default function ReportDetails() {
             </CardHeader>
             <CardContent>
               <img
-                src={report.medicalImage.startsWith("http") ? report.medicalImage : `/${report.medicalImage}`}
+                src={getMedicalImageSrc(report.medicalImage)}
                 alt="Submitted medical file"
                 className="max-h-96 w-full rounded-lg border object-contain bg-white"
               />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -126,6 +126,14 @@ export default function NewReport() {
     }
     setMedicalImagePreview("");
   };
+
+  useEffect(() => {
+    return () => {
+      if (medicalImagePreview) {
+        URL.revokeObjectURL(medicalImagePreview);
+      }
+    };
+  }, [medicalImagePreview]);
 
   const durationOptions = [
     "Less than 1 day",

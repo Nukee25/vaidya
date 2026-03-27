@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 
 from django.contrib.auth import authenticate
 from django.conf import settings
@@ -115,7 +114,8 @@ def _normalize_predicted_diseases(raw_predictions, diagnosis_fallback):
                 break
     if len(normalized) < 3:
         defaults = _build_mock_diagnosis([])["predicted_diseases"]
-        seed = diagnosis_fallback or (normalized[0]["disease"] if normalized else defaults[0]["disease"])
+        default_seed = defaults[0]["disease"] if defaults else "General Viral Syndrome"
+        seed = diagnosis_fallback or (normalized[0]["disease"] if normalized else default_seed)
         fallback_predictions = [{"disease": seed, "probability": 60}] + defaults
         for candidate in fallback_predictions:
             if len(normalized) == 3:
@@ -202,13 +202,16 @@ class PredictView(APIView):
     permission_classes = []
 
     def post(self, request):
-        payload = request.data.copy()
-        if isinstance(payload.get("symptom_cards"), str):
+        serializer_payload = {
+            "symptom_cards": request.data.get("symptom_cards"),
+            "medical_image": request.data.get("medical_image"),
+        }
+        if isinstance(serializer_payload["symptom_cards"], str):
             try:
-                payload["symptom_cards"] = json.loads(payload["symptom_cards"])
+                serializer_payload["symptom_cards"] = json.loads(serializer_payload["symptom_cards"])
             except (TypeError, ValueError, json.JSONDecodeError):
                 pass
-        serializer = PredictSerializer(data=payload)
+        serializer = PredictSerializer(data=serializer_payload)
         serializer.is_valid(raise_exception=True)
         symptom_cards = serializer.validated_data["symptom_cards"]
         medical_image = serializer.validated_data.get("medical_image")
@@ -230,8 +233,6 @@ class PredictView(APIView):
         response["date"] = report.created_at
         response["summary"] = report.summary
         response["status"] = report.status
-        if report.medical_image:
-            response["medicalImageName"] = os.path.basename(report.medical_image.name)
         return Response(response, status=status.HTTP_201_CREATED)
 
 

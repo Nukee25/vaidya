@@ -23,5 +23,5 @@ from api.views import LoginView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/", include("api.urls")),
-    path("apilogin/", LoginView.as_view(), name="legacy-api-login"),
+    path("apilogin/", LoginView.as_view(), name="legacy-api-login"),]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -95,7 +95,7 @@ def _build_report_from_ollama(symptom_cards):
     )
 
     response = ollama.chat(
-        model=getattr(settings, "OLLAMA_MODEL", "medllama2"),
+        model=getattr(settings, "OLLAMA_MODEL", "qwen3.5:397b-cloud"),
         messages=[{"role": "user", "content": _build_ollama_prompt(symptom_cards)}],
         format="json",
     )

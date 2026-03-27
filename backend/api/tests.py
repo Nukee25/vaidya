@@ -115,6 +115,39 @@ class AuthAndReportsApiTests(APITestCase):
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]["summary"], "A report")
 
+    def test_health_score_endpoint_returns_user_score(self):
+        john = User.objects.create_user(username="john", password="pass12345")
+        DiagnosisReport.objects.create(
+            user=john,
+            diagnosis="Diagnosis A",
+            severity="Mild",
+            symptoms=["Cough"],
+            recommendations=["Rest"],
+            precautions=["Hydrate"],
+            summary="A report",
+        )
+        DiagnosisReport.objects.create(
+            user=john,
+            diagnosis="Diagnosis B",
+            severity="Severe",
+            symptoms=["Chest pain"],
+            recommendations=["Consult doctor"],
+            precautions=["Monitor"],
+            summary="B report",
+        )
+
+        res = self.client.get(reverse("health-score"), {"username": "john"})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["score"], 65)
+
+    def test_health_score_requires_username(self):
+        res = self.client.get(reverse("health-score"))
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_health_score_user_not_found(self):
+        res = self.client.get(reverse("health-score"), {"username": "ghost"})
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
     @patch("api.views.ollama.chat")
     def test_predict_uses_ollama_generated_report(self, mock_chat):
         mock_chat.return_value = {

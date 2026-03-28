@@ -95,7 +95,7 @@ def _build_mock_diagnosis(symptom_cards):
 
 def _build_ollama_prompt(symptom_cards, gender=None, age=None):
     demographics = []
-    if gender:
+    if gender is not None:
         demographics.append(f"Gender: {gender}")
     if age is not None:
         demographics.append(f"Age: {age}")

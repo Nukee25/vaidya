@@ -32,7 +32,7 @@ class PredictSerializer(serializers.Serializer):
     )
     medical_image = serializers.FileField(required=False, allow_null=True)
     gender = serializers.ChoiceField(choices=DiagnosisReport.GENDER_CHOICES, required=False, allow_null=True)
-    age = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    age = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=150)
 
 
 class ReportListSerializer(serializers.ModelSerializer):

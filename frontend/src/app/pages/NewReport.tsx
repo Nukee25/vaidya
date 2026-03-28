@@ -245,7 +245,8 @@ export default function NewReport() {
                       <Input
                         id="age"
                         type="number"
-                        min={0}
+                        min={1}
+                        max={150}
                         placeholder="Enter age"
                         value={age}
                         onChange={(e) => setAge(e.target.value)}

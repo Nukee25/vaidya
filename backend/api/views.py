@@ -93,13 +93,20 @@ def _build_mock_diagnosis(symptom_cards):
     }
 
 
-def _build_ollama_prompt(symptom_cards):
+def _build_ollama_prompt(symptom_cards, gender=None, age=None):
+    demographics = []
+    if gender is not None:
+        demographics.append(f"Gender: {gender}")
+    if age is not None:
+        demographics.append(f"Age: {age}")
+    demographics_text = f"Patient demographics: {', '.join(demographics)}.\n" if demographics else ""
     return (
         "You are a medical triage assistant. Return only valid JSON with keys: "
         "predicted_diseases (array of at least 3 items with keys disease (string) and probability (number in percent)), "
         "diagnosis (string), severity (Mild|Moderate|Severe), recommendations (string[]), "
         "precautions (string[]), medications (string[]), when_to_see_doctor (string), "
         "additional_info (string), summary (string).\n"
+        f"{demographics_text}"
         f"Input symptom cards: {json.dumps(symptom_cards)}"
     )
 
@@ -140,7 +147,7 @@ def _normalize_predicted_diseases(raw_predictions, diagnosis_fallback):
     return normalized[:3]
 
 
-def _build_report_from_ollama(symptom_cards):
+def _build_report_from_ollama(symptom_cards, gender=None, age=None):
     valid_cards = _normalized_symptom_cards(symptom_cards)
     symptom_names = [str(card.get("symptom", "")).strip() for card in valid_cards]
     symptoms_text = "; ".join(
@@ -152,7 +159,7 @@ def _build_report_from_ollama(symptom_cards):
 
     response = ollama.chat(
         model=getattr(settings, "OLLAMA_MODEL", "qwen3.5:397b-cloud"),
-        messages=[{"role": "user", "content": _build_ollama_prompt(symptom_cards)}],
+        messages=[{"role": "user", "content": _build_ollama_prompt(symptom_cards, gender=gender, age=age)}],
         format="json",
     )
     content = response.get("message", {}).get("content", "{}")
@@ -219,6 +226,8 @@ class PredictView(APIView):
         serializer_payload = {
             "symptom_cards": request.data.get("symptom_cards"),
             "medical_image": request.data.get("medical_image"),
+            "gender": request.data.get("gender"),
+            "age": request.data.get("age"),
         }
         if isinstance(serializer_payload["symptom_cards"], str):
             try:
@@ -229,6 +238,8 @@ class PredictView(APIView):
         serializer.is_valid(raise_exception=True)
         symptom_cards = serializer.validated_data["symptom_cards"]
         medical_image = serializer.validated_data.get("medical_image")
+        gender = serializer.validated_data.get("gender")
+        age = serializer.validated_data.get("age")
         username = request.data.get("username")
         if not username:
             return Response({"detail": "username is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -237,11 +248,17 @@ class PredictView(APIView):
             defaults={"email": f"{username}@example.com"},
         )
         try:
-            report_payload = _build_report_from_ollama(symptom_cards)
+            report_payload = _build_report_from_ollama(symptom_cards, gender=gender, age=age)
         except (ConnectionError, json.JSONDecodeError, KeyError, TypeError, ValueError):
             logger.exception("Ollama report generation failed; falling back to mock diagnosis.")
             report_payload = _build_mock_diagnosis(symptom_cards)
-        report = DiagnosisReport.objects.create(user=user, medical_image=medical_image, **report_payload)
+        report = DiagnosisReport.objects.create(
+            user=user,
+            medical_image=medical_image,
+            gender=gender,
+            age=age,
+            **report_payload,
+        )
         response = ReportDetailSerializer(report).data
         response["id"] = report.id
         response["date"] = report.created_at

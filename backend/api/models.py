@@ -10,6 +10,12 @@ class DiagnosisReport(models.Model):
         ("completed", "Completed"),
         ("pending", "Pending"),
     ]
+    GENDER_CHOICES = [
+        ("male", "Male"),
+        ("female", "Female"),
+        ("other", "Other"),
+        ("prefer_not_to_say", "Prefer not to say"),
+    ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="diagnosis_reports")
     diagnosis = models.CharField(max_length=255)
@@ -25,6 +31,8 @@ class DiagnosisReport(models.Model):
     symptom_cards = models.JSONField(default=list)
     summary = models.CharField(max_length=255, default="Medical diagnosis report")
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="completed")
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
+    age = models.IntegerField(blank=True, null=True)
     medical_image = models.FileField(upload_to="medical-images/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

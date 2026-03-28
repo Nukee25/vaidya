@@ -20,6 +20,20 @@ from .serializers import (
 )
 
 logger = logging.getLogger(__name__)
+MAX_REPORTS_FOR_HEALTH_SCORE = 10
+UNKNOWN_SEVERITY_SCORE = 75
+
+
+def _calculate_health_score(reports):
+    if not reports:
+        return 85
+    severity_to_score = {
+        "mild": 90,
+        "moderate": 70,
+        "severe": 40,
+    }
+    values = [severity_to_score.get(str(report.severity).strip().lower(), UNKNOWN_SEVERITY_SCORE) for report in reports]
+    return round(sum(values) / len(values))
 
 
 def _normalized_symptom_cards(symptom_cards):
@@ -246,6 +260,20 @@ class ReportsView(APIView):
         reports = DiagnosisReport.objects.filter(user__username=username)
         serializer = ReportListSerializer(reports, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class HealthScoreView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        username = request.query_params.get("username")
+        if not username:
+            return Response({"detail": "username query parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.filter(username=username).first()
+        if not user:
+            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        reports = DiagnosisReport.objects.filter(user=user)[:MAX_REPORTS_FOR_HEALTH_SCORE]
+        return Response({"score": _calculate_health_score(reports)}, status=status.HTTP_200_OK)
 
 
 class ReportDetailView(APIView):

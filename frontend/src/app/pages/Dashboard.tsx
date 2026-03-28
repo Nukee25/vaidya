@@ -17,6 +17,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [reports, setReports] = useState<Report[]>([]);
+  const [healthScore, setHealthScore] = useState<number>(85);
 
   useEffect(() => {
     const isAuth = localStorage.getItem("isAuthenticated");
@@ -34,6 +35,10 @@ export default function Dashboard() {
         .get(`reports/?username=${encodeURIComponent(user)}`)
         .then((data) => setReports(Array.isArray(data) ? data : []))
         .catch(() => setReports([]));
+      api
+        .get(`health-score/?username=${encodeURIComponent(user)}`)
+        .then((data) => setHealthScore(typeof data?.score === "number" ? data.score : 85))
+        .catch(() => setHealthScore(85));
     }
   }, [navigate]);
 
@@ -128,9 +133,9 @@ export default function Dashboard() {
               <TrendingUp className="w-4 h-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">85/100</div>
+              <div className="text-2xl font-bold">{healthScore}/100</div>
               <p className="text-xs text-green-600 mt-1">
-                +5 from last month
+                Personalized from your reports
               </p>
             </CardContent>
           </Card>

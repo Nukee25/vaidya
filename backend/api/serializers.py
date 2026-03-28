@@ -31,6 +31,8 @@ class PredictSerializer(serializers.Serializer):
         allow_empty=False,
     )
     medical_image = serializers.FileField(required=False, allow_null=True)
+    gender = serializers.ChoiceField(choices=DiagnosisReport.GENDER_CHOICES, required=False, allow_null=True)
+    age = serializers.IntegerField(required=False, allow_null=True, min_value=0)
 
 
 class ReportListSerializer(serializers.ModelSerializer):
@@ -38,7 +40,7 @@ class ReportListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DiagnosisReport
-        fields = ["id", "date", "summary", "status"]
+        fields = ["id", "date", "summary", "status", "gender", "age"]
 
 
 class ReportDetailSerializer(serializers.ModelSerializer):
@@ -61,4 +63,6 @@ class ReportDetailSerializer(serializers.ModelSerializer):
             "user_symptoms",
             "symptom_cards",
             "medicalImage",
+            "gender",
+            "age",
         ]

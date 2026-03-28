@@ -26,6 +26,8 @@ export default function NewReport() {
   ]);
   const [medicalImage, setMedicalImage] = useState<File | null>(null);
   const [medicalImagePreview, setMedicalImagePreview] = useState<string>("");
+  const [gender, setGender] = useState<string>("");
+  const [age, setAge] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -86,6 +88,12 @@ export default function NewReport() {
       const formData = new FormData();
       formData.append("username", localStorage.getItem("username") || "demo_user");
       formData.append("symptom_cards", JSON.stringify(validSymptoms));
+      if (gender) {
+        formData.append("gender", gender);
+      }
+      if (age) {
+        formData.append("age", age);
+      }
       if (medicalImage) {
         formData.append("medical_image", medicalImage);
       }
@@ -213,6 +221,39 @@ export default function NewReport() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="gender">Gender (optional)</Label>
+                      <Select
+                        value={gender}
+                        onValueChange={setGender}
+                        disabled={isAnalyzing}
+                      >
+                        <SelectTrigger id="gender" className="w-full">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="age">Age (optional)</Label>
+                      <Input
+                        id="age"
+                        type="number"
+                        min={0}
+                        placeholder="Enter age"
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        disabled={isAnalyzing}
+                      />
+                    </div>
+                  </div>
+
                   {/* Symptom Cards */}
                   <div className="space-y-6">
                     {symptomCards.map((card, index) => (

@@ -36,16 +36,22 @@ class AuthAndReportsApiTests(APITestCase):
                     {"symptom": "Fever", "duration": "1-2 days", "severity": 7},
                     {"symptom": "Cough", "duration": "3-5 days", "severity": 5},
                 ],
+                "gender": "male",
+                "age": 32,
             },
             format="json",
         )
         self.assertEqual(predict_res.status_code, status.HTTP_201_CREATED)
         report_id = predict_res.data["id"]
+        self.assertEqual(predict_res.data["gender"], "male")
+        self.assertEqual(predict_res.data["age"], 32)
 
         list_res = self.client.get(reverse("reports"), {"username": "john"})
         self.assertEqual(list_res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(list_res.data), 1)
         self.assertEqual(list_res.data[0]["id"], report_id)
+        self.assertEqual(list_res.data[0]["gender"], "male")
+        self.assertEqual(list_res.data[0]["age"], 32)
 
         detail_res = self.client.get(reverse("report-detail", kwargs={"report_id": report_id}), {"username": "john"})
         self.assertEqual(detail_res.status_code, status.HTTP_200_OK)
@@ -99,6 +105,8 @@ class AuthAndReportsApiTests(APITestCase):
             recommendations=["Rest"],
             precautions=["Hydrate"],
             summary="A report",
+            gender="female",
+            age=24,
         )
         DiagnosisReport.objects.create(
             user=jane,
@@ -114,6 +122,8 @@ class AuthAndReportsApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]["summary"], "A report")
+        self.assertEqual(res.data[0]["gender"], "female")
+        self.assertEqual(res.data[0]["age"], 24)
 
     def test_health_score_endpoint_returns_user_score(self):
         john = User.objects.create_user(username="john", password="pass12345")
@@ -185,11 +195,15 @@ class AuthAndReportsApiTests(APITestCase):
                 "username": "john",
                 "symptom_cards": '[{"symptom":"Chest pain","duration":"1-2 days","severity":6}]',
                 "medical_image": image,
+                "gender": "other",
+                "age": 40,
             },
             format="multipart",
         )
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertIn("medical-images/", res.data["medicalImage"])
+        self.assertEqual(res.data["gender"], "other")
+        self.assertEqual(res.data["age"], 40)
 
     def test_legacy_apilogin_endpoint_maps_to_login_view(self):
         User.objects.create_user(username="john", email="john@example.com", password="strongpass123")

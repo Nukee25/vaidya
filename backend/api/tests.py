@@ -43,15 +43,15 @@ class AuthAndReportsApiTests(APITestCase):
         )
         self.assertEqual(predict_res.status_code, status.HTTP_201_CREATED)
         report_id = predict_res.data["id"]
-        self.assertEqual(predict_res.data["gender"], "male")
-        self.assertEqual(predict_res.data["age"], 32)
+        self.assertNotIn("gender", predict_res.data)
+        self.assertNotIn("age", predict_res.data)
 
         list_res = self.client.get(reverse("reports"), {"username": "john"})
         self.assertEqual(list_res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(list_res.data), 1)
         self.assertEqual(list_res.data[0]["id"], report_id)
-        self.assertEqual(list_res.data[0]["gender"], "male")
-        self.assertEqual(list_res.data[0]["age"], 32)
+        self.assertNotIn("gender", list_res.data[0])
+        self.assertNotIn("age", list_res.data[0])
 
         detail_res = self.client.get(reverse("report-detail", kwargs={"report_id": report_id}), {"username": "john"})
         self.assertEqual(detail_res.status_code, status.HTTP_200_OK)
@@ -105,8 +105,6 @@ class AuthAndReportsApiTests(APITestCase):
             recommendations=["Rest"],
             precautions=["Hydrate"],
             summary="A report",
-            gender="female",
-            age=24,
         )
         DiagnosisReport.objects.create(
             user=jane,
@@ -122,8 +120,8 @@ class AuthAndReportsApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]["summary"], "A report")
-        self.assertEqual(res.data[0]["gender"], "female")
-        self.assertEqual(res.data[0]["age"], 24)
+        self.assertNotIn("gender", res.data[0])
+        self.assertNotIn("age", res.data[0])
 
     def test_health_score_endpoint_returns_user_score(self):
         john = User.objects.create_user(username="john", password="pass12345")
@@ -202,8 +200,8 @@ class AuthAndReportsApiTests(APITestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertIn("medical-images/", res.data["medicalImage"])
-        self.assertEqual(res.data["gender"], "other")
-        self.assertEqual(res.data["age"], 40)
+        self.assertNotIn("gender", res.data)
+        self.assertNotIn("age", res.data)
 
     def test_legacy_apilogin_endpoint_maps_to_login_view(self):
         User.objects.create_user(username="john", email="john@example.com", password="strongpass123")

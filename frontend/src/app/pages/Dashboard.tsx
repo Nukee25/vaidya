@@ -118,7 +118,7 @@ export default function Dashboard() {
               <Calendar className="w-4 h-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2</div>
+              <div className="text-2xl font-bold">{reports.length}</div>
               <p className="text-xs text-gray-500 mt-1">
                 New reports this month
               </p>

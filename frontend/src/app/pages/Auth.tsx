@@ -36,7 +36,11 @@ export default function Auth() {
         .then((resp) => {
           toast.success("Login successful!");
           localStorage.setItem("isAuthenticated", "true");
-          localStorage.setItem("username", resp.username || loginData.email_id);
+          if (resp.username) {
+            localStorage.setItem("username", resp.username);
+          } else {
+            localStorage.removeItem("username");
+          }
           navigate("/dashboard");
         });
     } catch (error) {

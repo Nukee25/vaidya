@@ -203,7 +203,13 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user_obj = User.objects.filter(email=serializer.validated_data["email_id"]).first()
+        try:
+            user_obj = User.objects.get(email__iexact=serializer.validated_data["email_id"])
+        except User.DoesNotExist:
+            user_obj = None
+        except User.MultipleObjectsReturned:
+            logger.error("Multiple users found with the same email during login.")
+            user_obj = None
         user = None
         if user_obj:
             user = authenticate(

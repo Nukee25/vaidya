@@ -22,7 +22,7 @@ class AuthAndReportsApiTests(APITestCase):
 
         login_res = self.client.post(
             reverse("login"),
-            {"username": "john", "password": "strongpass123"},
+            {"email_id": "user@example.com", "password": "strongpass123"},
             format="json",
         )
         self.assertEqual(login_res.status_code, status.HTTP_200_OK)
@@ -195,7 +195,7 @@ class AuthAndReportsApiTests(APITestCase):
         User.objects.create_user(username="john", email="john@example.com", password="strongpass123")
         res = self.client.post(
             "/apilogin/",
-            {"username": "john", "password": "strongpass123"},
+            {"email_id": "john@example.com", "password": "strongpass123"},
             format="json",
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)

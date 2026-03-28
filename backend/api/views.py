@@ -203,10 +203,13 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = authenticate(
-            username=serializer.validated_data["username"],
-            password=serializer.validated_data["password"],
-        )
+        user_obj = User.objects.filter(email=serializer.validated_data["email_id"]).first()
+        user = None
+        if user_obj:
+            user = authenticate(
+                username=user_obj.username,
+                password=serializer.validated_data["password"],
+            )
         if not user:
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
         return Response({"message": "Login successful", "username": user.username}, status=status.HTTP_200_OK)

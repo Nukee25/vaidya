@@ -255,8 +255,6 @@ class PredictView(APIView):
         report = DiagnosisReport.objects.create(
             user=user,
             medical_image=medical_image,
-            gender=gender,
-            age=age,
             **report_payload,
         )
         response = ReportDetailSerializer(report).data

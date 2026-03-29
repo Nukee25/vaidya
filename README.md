@@ -18,14 +18,12 @@ Vaidya is a full-stack AI web application that predicts likely diseases from a l
 docker-compose up --build
 ```
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000/api/
-- Admin: http://localhost:8000/admin/
-- Ollama: http://localhost:11434
+- Frontend: http://vaidya.duckdns.org
+- Backend API: http://vaidya.duckdns.org/api/
 
 > **Note:** On first startup, pull the model inside the running Ollama container:
 > ```bash
-> docker exec -it vaidya-ollama-1 ollama pull llama3.2
+> docker exec -it vaidya-ollama-1 ollama pull qwen3.5:397b-cloud
 > ```
 
 ## Local Development (without Docker)
@@ -93,11 +91,14 @@ POST /api/predict/
 
 ## AI / LLM Integration
 
-- **Engine**: [Ollama](https://ollama.com) running `llama3.2` (configurable via `OLLAMA_MODEL` env var)
+- **Engine**: [Ollama](https://ollama.com) running `qwen3.5:397b-cloud` (configurable via `OLLAMA_MODEL` env var)
 - **Endpoint**: `POST /api/chat` on the Ollama service (`OLLAMA_HOST`, default `http://ollama:11434`)
 - **No training required**: The LLM reasons over symptoms at inference time and returns structured JSON predictions
 - **Prompt**: A system prompt instructs the model to return exactly 3 disease predictions with confidence scores, descriptions, and precautions
 
 ## Disclaimer
 
+- **This project is yet to be approved by a medical expert. Don't take its prescription as confirm at the moment, even if it is true. Always remember, a doctor at home sends you to hell**
+
+- 
 This application is for **educational purposes only** and is **not** a substitute for professional medical advice, diagnosis, or treatment.

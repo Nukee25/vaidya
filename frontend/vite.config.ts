@@ -21,7 +21,7 @@ export default defineConfig({
       "vaidya.duckdns.org"
     ],
     proxy: {
-      "/api/": "http://vaidya.duckdns.org/api",
+      "/api/": "http://vaidya.duckdns.org/api/",
     },
   },
 

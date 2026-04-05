@@ -44,6 +44,7 @@ export class API {
         let errorData;
         try {
           errorData = await response.json();
+          console.log("error data:", errorData);
         } catch {
           console.log(response)
           errorData = { message: response.statusText };
@@ -57,6 +58,7 @@ export class API {
             },
           })
         )
+        // throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message}`);
         return errorData;
       }
       return response.json();

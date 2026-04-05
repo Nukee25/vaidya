@@ -34,9 +34,14 @@ export default function Auth() {
     try {
       api.post("login/", loginData)
         .then((resp) => {
-          toast.success("Login successful!");
+          if (resp.status==="success") {
+            toast.success("Login successful!");
+          }else{
+            toast.error(resp.message || "Login failed"); return;
+          }
           localStorage.setItem("isAuthenticated", "true");
           localStorage.setItem("username", resp.username || loginData.username);
+          // throw new Error("Simulated error to test error handling"); // Remove this line in production
           navigate("/dashboard");
         });
     } catch (error) {

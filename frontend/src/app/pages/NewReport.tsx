@@ -99,9 +99,9 @@ export default function NewReport() {
       }
       const reportData = await api.post("predict/", formData);
 
-      // if (!response.ok) {
-      //   throw new Error(reportData.detail || "Failed to analyze symptoms");
-      // }
+      if (!reportData.ok) {
+        throw new Error(reportData.detail || "Failed to analyze symptoms");
+      }
       
       clearInterval(progressInterval);
       setProgress(100);

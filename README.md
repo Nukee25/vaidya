@@ -12,6 +12,7 @@ Vaidya is a full-stack AI web application that predicts likely diseases from a l
 - [Prerequisites](#prerequisites)
 - [Quick Start (Docker)](#quick-start-docker)
 - [Local Development](#local-development)
+- [Django Admin](#django-admin)
 - [Environment Variables](#environment-variables)
 - [API Reference](#api-reference)
 - [Project Structure](#project-structure)
@@ -101,6 +102,7 @@ The services will be available at:
 |---------|-----|
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:8000/api/ |
+| Django Admin | http://localhost:8000/admin/ |
 
 > **Note:** On first startup you must pull the Ollama model. While the containers are running, execute:
 > ```bash
@@ -128,12 +130,16 @@ pip install -r requirements.txt
 export DATABASE_URL="mysql://root:password@127.0.0.1:3306/vaidya?charset=utf8mb4"
 python manage.py migrate
 
+# Create an admin superuser (optional – for Django Admin access)
+python manage.py createsuperuser
+
 # Start the development server (Ollama must be running locally)
 export OLLAMA_HOST=http://localhost:11434
 python manage.py runserver
 ```
 
 The API is now available at `http://127.0.0.1:8000/api/`.
+The Django Admin is available at `http://127.0.0.1:8000/admin/`.
 
 ### Frontend
 
@@ -151,6 +157,39 @@ The frontend is now available at `http://localhost:5173`.
 
 ---
 
+## Django Admin
+
+The Django Admin interface lets you view and manage users and diagnosis reports directly in the browser.
+
+**URL:** `http://localhost:8000/admin/`
+
+### Docker (default credentials)
+
+When running via Docker Compose the backend container automatically creates a superuser on first startup using the environment variables below (see `docker-compose.yml`):
+
+| Variable | Default |
+|----------|---------|
+| `DJANGO_SUPERUSER_USERNAME` | `admin` |
+| `DJANGO_SUPERUSER_EMAIL` | `admin@example.com` |
+| `DJANGO_SUPERUSER_PASSWORD` | `vaidya-admin-dev` |
+
+Log in at http://localhost:8000/admin/ with username **`admin`** and password **`vaidya-admin-dev`**.
+
+> ⚠️ Change these values before deploying to any public-facing environment.
+
+### Local Development
+
+Create a superuser interactively after running migrations:
+
+```bash
+cd backend
+python manage.py createsuperuser
+```
+
+Then navigate to `http://127.0.0.1:8000/admin/` and log in with the credentials you just set.
+
+---
+
 ## Environment Variables
 
 ### Backend
@@ -163,6 +202,9 @@ The frontend is now available at `http://localhost:5173`.
 | `DJANGO_SECRET_KEY` | `django-insecure-dev-key-change-me` | Django secret key – **change in production** |
 | `DJANGO_DEBUG` | `true` | Set to `false` in production |
 | `DJANGO_ALLOWED_HOSTS` | `*` | Comma-separated list of allowed hostnames |
+| `DJANGO_SUPERUSER_USERNAME` | `admin` | Superuser username auto-created on startup (Docker) |
+| `DJANGO_SUPERUSER_EMAIL` | `admin@example.com` | Superuser email auto-created on startup (Docker) |
+| `DJANGO_SUPERUSER_PASSWORD` | `vaidya-admin-dev` | Superuser password auto-created on startup (Docker) |
 
 ### Frontend
 

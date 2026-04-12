@@ -22,6 +22,9 @@ services:
       - OLLAMA_HOST=http://ollama:11434
       - DJANGO_DEBUG=true
       - DJANGO_ALLOWED_HOSTS=*
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_EMAIL=admin@example.com
+      - DJANGO_SUPERUSER_PASSWORD=vaidya-admin-dev
     networks:
       - publicweb
       - api

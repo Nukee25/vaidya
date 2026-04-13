@@ -17,7 +17,7 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [loginData, setLoginData] = useState({
-    username: "",
+    email_id: "",
     password: "",
   });
 
@@ -36,7 +36,11 @@ export default function Auth() {
         .then((resp) => {
           toast.success("Login successful!");
           localStorage.setItem("isAuthenticated", "true");
-          localStorage.setItem("username", resp.username || loginData.username);
+          if (resp.username) {
+            localStorage.setItem("username", resp.username);
+          } else {
+            localStorage.removeItem("username");
+          }
           navigate("/dashboard");
         });
     } catch (error) {
@@ -127,17 +131,17 @@ export default function Auth() {
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-username">Username</Label>
+                    <Label htmlFor="login-email">Email</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
-                        id="login-username"
-                        type="text"
-                        placeholder="Enter your username"
+                        id="login-email"
+                        type="email"
+                        placeholder="Enter your email"
                         className="pl-10"
-                        value={loginData.username}
+                        value={loginData.email_id}
                         onChange={(e) =>
-                          setLoginData({ ...loginData, username: e.target.value })
+                          setLoginData({ ...loginData, email_id: e.target.value })
                         }
                         required
                       />

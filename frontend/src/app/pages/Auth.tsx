@@ -63,9 +63,9 @@ export default function Auth() {
         username: signupData.username,
         password: signupData.password,
       });
-      toast.success("Account created successfully!");
       localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("username", resp.username);
+      localStorage.setItem("username", resp.username || signupData.username);
+      toast.success("Account created successfully!");
       navigate("/dashboard");
     } catch (error) {
       console.error("Signup error:", error);

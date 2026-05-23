@@ -145,7 +145,7 @@ class Ollama(APIView):
         return normalized[:3]
 
 
-    def _build_report_from_ollama(symptom_cards, gender=None, age=None):
+    def Ollama._build_report_from_ollama(symptom_cards, gender=None, age=None):
         valid_cards = Ollama._normalized_symptom_cards(symptom_cards)
         symptom_names = [str(card.get("symptom", "")).strip() for card in valid_cards]
         symptoms_text = "; ".join(
@@ -246,7 +246,7 @@ class PredictView(APIView):
             defaults={"email": f"{username}@example.com"},
         )
         try:
-            report_payload = _build_report_from_ollama(symptom_cards, gender=gender, age=age)
+            report_payload = Ollama._build_report_from_ollama(symptom_cards, gender=gender, age=age)
         except (ConnectionError, json.JSONDecodeError, KeyError, TypeError, ValueError):
             logger.exception("Ollama report generation failed; falling back to mock diagnosis.")
             report_payload = _build_mock_diagnosis(symptom_cards)

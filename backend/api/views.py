@@ -156,7 +156,7 @@ class Ollama(APIView):
         )
 
         response = ollama.chat(
-            model=getattr(settings, "OLLAMA_MODEL", "qwen3.5:397b-cloud"),
+            model=getattr(settings, "OLLAMA_MODEL", "medgemma1.5"),
             messages=[{"role": "user", "content": Ollama._build_ollama_prompt(symptom_cards, gender=gender, age=age)}],
             format="json",
         )

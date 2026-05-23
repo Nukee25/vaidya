@@ -157,13 +157,13 @@ class Ollama(APIView):
 
         response = ollama.chat(
             model=getattr(settings, "OLLAMA_MODEL", "qwen3.5:397b-cloud"),
-            messages=[{"role": "user", "content": _build_ollama_prompt(symptom_cards, gender=gender, age=age)}],
+            messages=[{"role": "user", "content": Ollama._build_ollama_prompt(symptom_cards, gender=gender, age=age)}],
             format="json",
         )
         content = response.get("message", {}).get("content", "{}")
         payload = json.loads(content)
         diagnosis = str(payload.get("diagnosis") or "General Viral Syndrome")
-        predicted_diseases = _normalize_predicted_diseases(payload.get("predicted_diseases"), diagnosis)
+        predicted_diseases = Ollama._normalize_predicted_diseases(payload.get("predicted_diseases"), diagnosis)
 
         return {
             "diagnosis": diagnosis,
@@ -249,7 +249,7 @@ class PredictView(APIView):
             report_payload = Ollama._build_report_from_ollama(symptom_cards, gender=gender, age=age)
         except (ConnectionError, json.JSONDecodeError, KeyError, TypeError, ValueError):
             logger.exception("Ollama report generation failed; falling back to mock diagnosis.")
-            report_payload = _build_mock_diagnosis(symptom_cards)
+            report_payload = Ollama._build_mock_diagnosis(symptom_cards)
         report = DiagnosisReport.objects.create(
             user=user,
             medical_image=medical_image,

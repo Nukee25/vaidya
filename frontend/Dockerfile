@@ -3,6 +3,6 @@ FROM node:24-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm i
 
-CMD ["npm", "vite"]
+CMD ["npm", "run", "dev"]

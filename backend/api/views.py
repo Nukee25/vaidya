@@ -145,7 +145,7 @@ class Ollama(APIView):
         return normalized[:3]
 
 
-    def Ollama._build_report_from_ollama(symptom_cards, gender=None, age=None):
+    def _build_report_from_ollama(symptom_cards, gender=None, age=None):
         valid_cards = Ollama._normalized_symptom_cards(symptom_cards)
         symptom_names = [str(card.get("symptom", "")).strip() for card in valid_cards]
         symptoms_text = "; ".join(

@@ -101,6 +101,7 @@ class Ollama(APIView):
             demographics.append(f"Age: {age}")
         demographics_text = f"Patient demographics: {', '.join(demographics)}.\n" if demographics else ""
         return (
+            "keep the summary concise (1-2 sentences) and focused on the most likely diagnosis. "
             "You are a medical triage assistant. Return only valid JSON with keys: "
             "predicted_diseases (array of at least 3 items with keys disease (string) and probability (number in percent)), "
             "diagnosis (string), severity (Mild|Moderate|Severe), recommendations (string[]), "
@@ -156,7 +157,7 @@ class Ollama(APIView):
         )
 
         response = ollama.chat(
-            model=getattr(settings, "OLLAMA_MODEL", "medgemma1.5"),
+            model=getattr(settings, "OLLAMA_MODEL", "vaidya:latest"),
             messages=[{"role": "user", "content": Ollama._build_ollama_prompt(symptom_cards, gender=gender, age=age)}],
             format="json",
         )
